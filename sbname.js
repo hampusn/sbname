@@ -1,5 +1,21 @@
 (function($,undefined) {
-	
+
+/*
+ * jQuery.fn.sbname(options,ajaxErrorFunc);
+ * 
+ * Get a product's name, by it's product number, from systembolaget.se (which is the website 
+ * of the state-owned company/store for liqour & other alcoholic beverages in Sweden.)
+ * 
+ * Version 0.1.2
+ * 
+ * 
+ * by Hampus Nordin
+ * http://labs.hampusnordin.se/sbname/
+ * 
+ * Using Yahoo!'s YQL to get the data from systembolaget.se.
+ * http://developer.yahoo.com/yql/
+*/
+
 /* Accepted parameters:
  * 
  * 1.	$(selection).sbname();
@@ -9,32 +25,47 @@
  * 2.	$(selection).sbname(options);
  *		Takes the options as an object literal.
  *		Default parameters are below this list of accepted parameters.
- *		
+ *
+ * 3.	$(selection).sbname(options,ajaxErrorFunc);
+ * 		An error function can be passed...
+ * 		
  *
  * Default options:
  *		
- *		speedIn: 	The animation speed to use when the product name is animated in.
- *					-Defaults to 400 (ms).
+ *		speedIn: 		The animation speed to use when the product name is animated in.
+ *						-Defaults to 400 (ms).
  *
- *		speedOut: 	The animation speed to use when the product number is animated out.
- *					-Defaults to 500 (ms).
+ *		speedOut: 		The animation speed to use when the product number is animated out.
+ *						-Defaults to 500 (ms).
  *
- *		argsIn: 	Extra Arguments to animate In. To skip the opacity,
- *					pass an empty object to argsIn. ie $(selector).sbname({argsIn: {} });
- *					-Defaults to { _currentOpacityOfObject_ }.
+ *		argsIn: 		Extra Arguments to animate In. To skip the opacity,
+ *						pass an empty object to argsIn. ie $(selector).sbname({argsIn: {} });
+ *						-Defaults to { _currentOpacityOfObject_ }.
  *
- *		argsOut: 	Extra Arguments to animate Out. To skip the opacity,
- *					do the same as above, but for argsOut.
- *					-Defaults to {opacity:0}.
+ *		argsOut: 		Extra Arguments to animate Out. To skip the opacity,
+ *						do the same as above, but for argsOut.
+ *						-Defaults to {opacity:0}.
  *
- *		dom: 		Desc. Coming soon...,
- *					....
- *					-Defaults to {outer: '', pNumber: '', pName: ''}.
+ *		dom: 			Desc. Coming soon...,
+ *						....
+ *						If outer is set, the selection which $.sbname was called with will 
+ *						practically be ignored, except from if there's a selection error with 
+ *						outer. If that's the case, the original selection will be passed on 
+ *						for chainability reasons.
+ *						-Defaults to {outer: '', pNumber: '', pName: ''}.
+ *
+ *		nameFormat:		Cropping options of name. 
+ *						
+ *						-Defaults to {cropIf: 0, toLen: 0, after: ''}.
+ *
+ *		ajaxErrorFunc:	Desc. Coming soon...,
+ *						....
+ *						-Defaults to '' (none).
  *
  *		
 */
 
-$.fn.sbname = function(options) {
+$.fn.sbname = function(options,ajaxErrorFunc) {
 	
 	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
 	var o = (typeof options !== 'string' && typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults);
@@ -73,6 +104,9 @@ $.fn.sbname = function(options) {
 			var regex = /^[\d]+/;
 			var artnr = regex.exec(artnr);
 			
+			//If ErrorFunc exists, bind it to current item in $.each.
+			if (typeof ajaxErrorFunc === 'function') $(this).ajaxError(ajaxErrorFunc);
+			
 			//If artnr is an integer, continue.
 			if (artnr == parseInt(artnr)) {
 				
@@ -84,7 +118,7 @@ $.fn.sbname = function(options) {
 				$.get(url, function(data) {
 					
 					//If a name was found, continue.
-					if (data != '') {
+					if (data != '' && data['query']['results'] != null) {
 						
 						//Select string with the name.
 						var d = data['query']['results'];
@@ -93,6 +127,18 @@ $.fn.sbname = function(options) {
 						var regex2 = /[^\(]+/i;
 						var r = regex2.exec(d);
 						var name = $.trim(r[0]).replace(/[\s]{1,}/g,' ');
+						
+						//Format name according to o.nameFormat.
+						var cropIf = parseInt(o.nameFormat.cropIf);
+						var toLen = parseInt(o.nameFormat.toLen);
+						name = 	(cropIf > 0 && name.length > cropIf) ?
+									(toLen > 0 && toLen < cropIf) ?
+									name.substr(0, toLen) :
+									name.substr(0, cropIf) :
+								name;
+						
+						//If o.nameFormat.after is set. Add that. Yep.
+						if (o.nameFormat.after != '' && typeof o.nameFormat.after == 'string') name += o.nameFormat.after;
 						
 						//Set animation args.
 						var opac = {opacity: pName.css('opacity')};
@@ -108,9 +154,17 @@ $.fn.sbname = function(options) {
 							}
 							pName.animate(aIn,o.speedIn);
 						});
+					}else{
+						//Trigger Error since no name was found. Prolly bad product number.
+						if (typeof ajaxErrorFunc === 'function') ajaxErrorFunc();
 					}
 				});
+			}else{
+				//Trigger Error since the product nr prolly was bad.
+				if (typeof ajaxErrorFunc === 'function') ajaxErrorFunc();
 			}
+			//Unbind errorFunc.
+			if (typeof ajaxErrorFunc === 'function') $(this).unbind('ajaxError');
 		});
 	}
 	//Went wrong with the selection. Do nothing and pass the collection on for further chainability. 
@@ -133,8 +187,32 @@ $.fn.sbname.defaults = {
 	argsOut: {opacity:0},
 	
 	//Args... description coming in due time...
-	dom: {outer: '', pNumber: '', pName: ''}
+	dom: {outer: '', pNumber: '', pName: ''},
+	
+	//If name is longer than cropIf then crop to len and then add after.
+	//Example:
+	//Name = 'Saintsbury Lee Vineyard Pinot Noir 2007'; (length: 39)
+	//nameFormat = {cropIf: 25, len: 20, after: '...'}
+	//newName = 'Saintsbury Lee Viney...'
+	nameFormat: {cropIf: 0, toLen: 0, after: ''}
 	
 };
 
 })(jQuery);
+
+/*
+
+YQL:
+
+select * from html where url="http://systembolaget.se/SokDrycker/Produkt?VaruNr=2525" and xpath='//span[@class="rubrikstor"]/text() | //span[@class="rubrikstortunn"]/text()'
+
+New SB site will have this product url structure:
+
+http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=2525
+
+Dont forget to find new stuff to filter by (instead of span.rubrikstor etc.)
+
+
+
+
+*/
