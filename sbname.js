@@ -46,8 +46,40 @@
  *						do the same as above, but for argsOut.
  *						-Defaults to {opacity:0}.
  *
- *		dom: 			Desc. Coming soon...,
- *						....
+ *		dom: 			When it isn't suited to just switch the product number to the product name
+ *						due to the html structure, this argument comes in handy. Picture the following
+ *						markup:
+ *						
+ *							<p>This is a sentence with a product number like <span>2525</span> which
+ *							happens to be Baron de Ley.</p>
+ *						
+ *						This markup allows us to change the span-elements content without any
+ *						complications. This is what sbname will do per default. However, the dom argument
+ *						comes quite in handy if your markup looks something like this:
+ *
+ *							<ul>						
+ *								<li>
+ *									<span class="nr">2525</span>
+ *									<span class="name"></span>
+ *								</li>
+ *								<li>...
+ *							</ul>
+ *						
+ *						If you got a list with a structure for the list-items like this,
+ *						and want to take the number of 'span.nr' and set the product name
+ *						on 'span.name' then you'll need to set the dom argument accordingly:
+ *
+ *						dom.outer =		The parent/ancestor of both the number and target elements.
+ *										It doesn't have to be the closest mutual parent/ancestor, but it helps.
+ *										It mustn't be a parent which has more than one descendant/child of either
+ *										a number or a target element. In this case it must be the li and not the ul element.
+ *							
+ *						dom.pNumber = 	This should be set to whatever element to get the product number from.
+ *										If it's not a jQuery object, a search will be made for matches inside the dom.outer.
+ *										Ie. pass '.nr' to search for a descendant/child (with the class 'nr') to the dom.outer.
+ *
+ *						dom.pName =		Just like pNumber but for the target element which will get the product name inserted.
+ * 
  *						If outer is set, the selection which $.sbname was called with will 
  *						practically be ignored, except from if there's a selection error with 
  *						outer. If that's the case, the original selection will be passed on 
@@ -55,6 +87,14 @@
  *						-Defaults to {outer: '', pNumber: '', pName: ''}.
  *
  *		nameFormat:		Cropping options of name. 
+ *						If the product name is longer than nameFormat.cropIf, the name
+ *						will be shortened to nameFormat.len characters. If nameFormat.after
+ *						is also set, it will be added to the end of the shortened name.
+ *						Example:
+ *
+ *						ProductName = 	'Saintsbury Lee Vineyard Pinot Noir 2007'; (length: 39)
+ *						nameFormat = 	{cropIf: 25, len: 20, after: '...'};
+ *						result =		'Saintsbury Lee Viney...';
  *						
  *						-Defaults to {cropIf: 0, toLen: 0, after: ''}.
  *
@@ -126,7 +166,7 @@ $.fn.sbname = function(options,ajaxErrorFunc) {
 						//Filter out the product number and also all whitespaces and random newlines which SB seems to like.
 						var regex2 = /[^\(]+/i;
 						var r = regex2.exec(d);
-						var name = $.trim(r[0]).replace(/[\s]{1,}/g,' ');
+						var name = $.trim(r[0]).replace(/[\s]{2,}/g,' ');
 						
 						//Format name according to o.nameFormat.
 						var cropIf = parseInt(o.nameFormat.cropIf);
@@ -180,20 +220,16 @@ $.fn.sbname.defaults = {
 	//The animation speed for easeOut.
 	speedOut: 500,
 	
-	//Extra Arguments to animate In. To skip the opacity, pass an empty object to argsIn. ie $(selector).sbname({argsIn: {} });
+	//Extra Arguments to animate In.
 	argsIn: {},
 	
-	//Extra Arguments to animate Out. To skip the opacity, do the same as above, but for argsOut.
+	//Extra Arguments to animate Out. To skip the opacity, pass an empty object to argsOut. ie $(selector).sbname({argsOut: {} });
 	argsOut: {opacity:0},
 	
-	//Args... description coming in due time...
+	//For a description, see above (top).
 	dom: {outer: '', pNumber: '', pName: ''},
 	
-	//If name is longer than cropIf then crop to len and then add after.
-	//Example:
-	//Name = 'Saintsbury Lee Vineyard Pinot Noir 2007'; (length: 39)
-	//nameFormat = {cropIf: 25, len: 20, after: '...'}
-	//newName = 'Saintsbury Lee Viney...'
+	//Argument for formatting of the product name.
 	nameFormat: {cropIf: 0, toLen: 0, after: ''}
 	
 };
@@ -206,13 +242,11 @@ YQL:
 
 select * from html where url="http://systembolaget.se/SokDrycker/Produkt?VaruNr=2525" and xpath='//span[@class="rubrikstor"]/text() | //span[@class="rubrikstortunn"]/text()'
 
+
 New SB site will have this product url structure:
 
 http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=2525
 
 Dont forget to find new stuff to filter by (instead of span.rubrikstor etc.)
-
-
-
 
 */
