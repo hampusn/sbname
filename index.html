@@ -1,1 +1,69 @@
-My GitHub Page
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-Language" content="se-sv" />
+    <title>sbname.js - A jQuery plugin</title>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+	<script type="text/javascript" src="sbname.js"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('#nr').focus();
+			
+			var d = {outer: $('#container'), pNumber: '#nr', pName: '#name'}
+			
+			$('#getName').click(function(e) {
+				$('#name').html('<img src="ajax-loader.gif" alt="Loading..." />');
+				$('#name').find('img').animate({opacity: 1},200);
+				$('#container').sbname({dom: d, argsIn: {opacity: 1}, error: function(elem) {
+					elem.html('Nothin found.')
+				}
+				});
+				e.preventDefault();
+			});
+		});
+	</script>
+	<style>
+		html,body,h1,p,span,input {margin:0;padding:0;border:0;}
+		html,body,input {font-family: 'Century Schoolbook', Georgia, serif;}
+		html,body {background: #f8f8f8;font-size: 100%;text-align: center;}
+		
+		h1 {font-size: 4em; margin-top: 1em; font-weight: normal; letter-spacing: -0.05em; color: #444;}
+		h1 span {color: #ccc;}
+		span a {font-size: 0.9em; color: #888;}
+		
+		#container {width: 30em; margin:4em auto; padding: 1em;}
+			
+			#name img {opacity: 0;width: 1em;}
+			#name, #nr, #getName {padding: 0.7em 1em;}
+			#name {margin-bottom: 1em; font-size: 1.5em; opacity: 0.3; color: #222;text-shadow: 0 0 5px #fff;}
+			#nr, #getName {
+				font-size: 1em;
+				border: 3px solid #ddd;
+				background: #eee;
+				-webkit-border-radius: 10px;
+				-moz-border-radius: 10px;
+				border-radius: 10px;
+				outline: 0;
+				}
+			#nr {text-align: center;}
+			#getName {color: #222;}
+			
+			#nr:hover, #nr:focus, #getName:hover, #getName:focus {background: #fafafa;border-color: #888;}
+		
+			#tips {margin-top: 6em;font-size: 0.8em;letter-spacing: 0.1em;color: #888; line-height: 1.6em;}
+	</style>
+</head>
+<body>
+	
+	<h1>sbname<span>.js</span></h1>
+	<span><a href="http://github.com/hampusn/sbname">sbname on github</a></span>
+	<div id="container">
+		<p id="name">Product name</p>
+		<input id="nr" type="text" />
+		<a id="getName" href="#">Get name!</a>
+		<p id="tips">Some product numbers to<br />try if you don't know any:<br />1570 &bull; 6792 &bull; 363 &bull; 1948</p>
+	</div>
+	
+</body>
+</html>
