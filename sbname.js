@@ -25,9 +25,6 @@
  * 2.	$(selection).sbname(options);
  *		Takes the options as an object literal.
  *		Default parameters are below this list of accepted parameters.
- *
- * 3.	$(selection).sbname(options,ajaxErrorFunc);
- * 		An error function can be passed...
  * 		
  *
  * Default options:
@@ -105,7 +102,7 @@
  *		
 */
 
-$.fn.sbname = function(options,ajaxErrorFunc) {
+$.fn.sbname = function(options) {
 	
 	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
 	var o = (typeof options !== 'string' && typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults);
@@ -127,7 +124,7 @@ $.fn.sbname = function(options,ajaxErrorFunc) {
 							$(this);
 			
 			//Should we get the product number from the value attribute or the innerhtml?
-			var pNumberType = (/^(?:area|textarea|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
+			var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
 
 			//Set the name element which will get the product name if found.
 			var pName = 	(o.dom.pName != '' && typeof o.dom.pName == 'string') ? $(this).find(o.dom.pName) :
@@ -135,7 +132,7 @@ $.fn.sbname = function(options,ajaxErrorFunc) {
 							$(this);
 			
 			//Should we set the product name on the value attribute or in the innerhtml?
-			var pNameType	= (/^(?:area|textarea|input)$/i.test(pName[0].tagName)) ? 'value' : 'html';
+			var pNameType	= (/^(?:area|input)$/i.test(pName[0].tagName)) ? 'value' : 'html';
 			
 			//Get the ArtNr/Product number.
 			var artnr =		(pNumberType == 'html') ? pNumber.html() : pNumber.attr('value');
@@ -145,7 +142,7 @@ $.fn.sbname = function(options,ajaxErrorFunc) {
 			var artnr = regex.exec(artnr);
 			
 			//If ErrorFunc exists, bind it to current item in $.each.
-			if (typeof ajaxErrorFunc === 'function') $(this).ajaxError(ajaxErrorFunc);
+			if (typeof o.error === 'function') $(this).ajaxError(o.error);
 			
 			//If artnr is an integer, continue.
 			if (artnr == parseInt(artnr)) {
@@ -196,15 +193,15 @@ $.fn.sbname = function(options,ajaxErrorFunc) {
 						});
 					}else{
 						//Trigger Error since no name was found. Prolly bad product number.
-						if (typeof ajaxErrorFunc === 'function') ajaxErrorFunc();
+						if (typeof o.error === 'function') o.error(pName);
 					}
 				});
 			}else{
 				//Trigger Error since the product nr prolly was bad.
-				if (typeof ajaxErrorFunc === 'function') ajaxErrorFunc();
+				if (typeof o.error === 'function') o.error(pName);
 			}
 			//Unbind errorFunc.
-			if (typeof ajaxErrorFunc === 'function') $(this).unbind('ajaxError');
+			if (typeof o.error === 'function') $(this).unbind('ajaxError');
 		});
 	}
 	//Went wrong with the selection. Do nothing and pass the collection on for further chainability. 
@@ -230,7 +227,9 @@ $.fn.sbname.defaults = {
 	dom: {outer: '', pNumber: '', pName: ''},
 	
 	//Argument for formatting of the product name.
-	nameFormat: {cropIf: 0, toLen: 0, after: ''}
+	nameFormat: {cropIf: 0, toLen: 0, after: ''},
+	
+	error: null
 	
 };
 
