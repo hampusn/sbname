@@ -24,13 +24,15 @@
 		});
 	</script>
 	<style>
-		html,body,h1,p,span,input {margin:0;padding:0;border:0;}
+		html,body,h1,p,span,input,a {margin:0;padding:0;border:0;}
 		html,body,input {font-family: 'Century Schoolbook', Georgia, serif;}
 		html,body {background: #f8f8f8;font-size: 100%;text-align: center;}
 		
 		h1 {font-size: 4em; margin-top: 1em; font-weight: normal; letter-spacing: -0.05em; color: #444;}
 		h1 span {color: #ccc;}
-		span a {font-size: 0.9em; color: #888;}
+		body > span {font-size: 0.9em;color: #aaa;}
+		span a {color: #888; text-decoration: underline;}
+		span a:hover {color: #333; text-decoration: none;}
 		
 		#container {width: 30em; margin:4em auto; padding: 1em;}
 			
@@ -50,20 +52,27 @@
 			#getName {color: #222;}
 			
 			#nr:hover, #nr:focus, #getName:hover, #getName:focus {background: #fafafa;border-color: #888;}
+			#getName:hover {text-decoration: none;}
 		
 			#tips {margin-top: 6em;font-size: 0.8em;letter-spacing: 0.1em;color: #888; line-height: 1.6em;}
 	</style>
 </head>
 <body>
-	
 	<h1>sbname<span>.js</span></h1>
-	<span><a href="http://github.com/hampusn/sbname">sbname on github</a></span>
+	<span>
+		<a href="http://github.com/hampusn/sbname">sbname on github</a> &bull;
+		<a href="http://hampusn.github.com/sbname/sbname.js">sbname.js</a>
+	</span>
+	
 	<div id="container">
 		<p id="name">Product name</p>
 		<input id="nr" type="text" />
 		<a id="getName" href="#">Get name!</a>
-		<p id="tips">Some product numbers to<br />try if you don't know any:<br />1570 &bull; 6792 &bull; 363 &bull; 1948</p>
+		<p id="tips">
+			Some product numbers to<br />
+			try if you don't know any:<br />
+			1570 &bull; 6792 &bull; 363 &bull; 1948
+		</p>
 	</div>
-	
 </body>
 </html>
