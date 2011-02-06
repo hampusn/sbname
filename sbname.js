@@ -168,14 +168,15 @@ $.fn.sbname = function(options) {
 						//Format name according to o.nameFormat.
 						var cropIf = parseInt(o.nameFormat.cropIf);
 						var toLen = parseInt(o.nameFormat.toLen);
-						name = 	(cropIf > 0 && name.length > cropIf) ?
-									(toLen > 0 && toLen < cropIf) ?
-									name.substr(0, toLen) :
-									name.substr(0, cropIf) :
-								name;
 						
-						//If o.nameFormat.after is set. Add that. Yep.
-						if (o.nameFormat.after != '' && typeof o.nameFormat.after == 'string') name += o.nameFormat.after;
+						if (cropIf > 0 && name.length > cropIf) {
+							name = (toLen > 0 && toLen < cropIf) ?
+									name.substr(0, toLen) :
+									name.substr(0, cropIf);
+						
+							//If o.nameFormat.after is set. Add that. Yep.
+							if (o.nameFormat.after != '' && typeof o.nameFormat.after == 'string') name += o.nameFormat.after;
+						}
 						
 						//Set animation args.
 						var opac = {opacity: pName.css('opacity')};
