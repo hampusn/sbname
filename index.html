@@ -5,17 +5,18 @@
 	<meta http-equiv="Content-Language" content="se-sv" />
     <title>sbname.js - A jQuery plugin</title>
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
-	<script type="text/javascript" src="http://github.com/hampusn/sbname/raw/master/sbname.js"></script>
+	<script type="text/javascript" src="http://github.com/hampusn/sbname/raw/master/jquery.sbname.js"></script>
 	<script type="text/javascript">
 		$(function() {
 			$('#nr').focus();
 			
 			var d = {outer: $('#container'), pNumber: '#nr', pName: '#name'}
+			var nf = {extWrap: 'span'};
 			
 			$('#getName').click(function(e) {
 				$('#name').html('<img src="ajax-loader.gif" alt="Loading..." />');
 				$('#name').find('img').animate({opacity: 1},200);
-				$('#container').sbname({dom: d, argsIn: {opacity: 1}, error: function(elem) {
+				$('#container').sbname({dom: d, nameFormat: nf, argsIn: {opacity: 1}, error: function(elem) {
 					elem.html('Nothin found.')
 				}
 				});
