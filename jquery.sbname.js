@@ -192,7 +192,7 @@ $.fn.sbname = function(options) {
 					$.get(YQLstring(artnr), function(data) {
 				
 						//If a name was found, continue.
-						if (data != '' && data.query.results.results.h1.span != null) {
+						if (data != '' && data.query.results.results != null) {
 						
 							//Makes it shorter below. We don't need the rest anyways.
 							data = data.query.results.results.h1.span;
