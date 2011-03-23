@@ -192,10 +192,10 @@ $.fn.sbname = function(options) {
 					$.get(YQLstring(artnr), function(data) {
 				
 						//If a name was found, continue.
-						if (data != '' && data.query.results.results != null) {
+						if (data != '' && data.query.results != null) {
 						
 							//Makes it shorter below. We don't need the rest anyways.
-							data = data.query.results.results.h1.span;
+							data = data.query.results.span;
 						
 							//Select string with the name.
 							//Filter out the product number and also all whitespaces and random newlines which SB seems to like.
@@ -334,7 +334,8 @@ function anim(pName, pNameType, o, name) {
 //YQL gets the h1-element within the div that has the class 'beverageProperties'. (for some reason there are 2 h1-elements on the product page.)
 //This h1 contains the product name.
 function YQLstring(artNr) {
-	return "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D"+artNr+"%22%20and%20css%3D%22div.beverageProperties%20h1%22&format=json&callback="
+	return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.systembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D"+artNr+"%22%20and%20xpath%3D'%2F%2Fdiv%5B%40class%3D%22beverageProperties%22%5D%2Fdiv%2Fh1%2Fnode()'%0A&format=json&callback="
+	//return "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D"+artNr+"%22%20and%20css%3D%22div.beverageProperties%20h1%22&format=json&callback="
 }
 
 var sbnameDB = {
@@ -439,7 +440,7 @@ var sbnameDB = {
 
 /*
 
-YQL:
+YQL for OLD systembolaget.se:
 
 	XPATH:
 	select * from html where url="http://systembolaget.se/SokDrycker/Produkt?VaruNr=2525" and xpath='//span[@class="rubrikstor"]/text() | //span[@class="rubrikstortunn"]/text()'
@@ -452,9 +453,11 @@ YQL:
 NEW YQL:
 
 	XPATH: --
+	select * from html where url="http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=90060" and xpath='//div[@class="beverageProperties"]/div/h1/node()'
+	http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.systembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D90060%22%20and%20xpath%3D'%2F%2Fdiv%5B%40class%3D%22beverageProperties%22%5D%2Fdiv%2Fh1%2Fnode()'%0A&format=json&callback=
 	
 	CSS-STYLE:
-	use "http://yqlblog.net/samples/data.html.cssselect.xml"; select * from data.html.cssselect where url="http://systembolaget.se/Sok-dryck/Dryck/?varuNr=90060" and css="div.beverageProperties h1"
+	use "http://yqlblog.net/samples/data.html.cssselect.xml"; select * from data.html.cssselect where url="http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=90060" and css="div.beverageProperties h1"
 	http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D90060%22%20and%20css%3D%22div.beverageProperties%20h1%22&format=json&callback=
 	
 
