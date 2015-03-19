@@ -163,7 +163,7 @@ $.fn.sbname = function(options) {
 			//If artnr is an integer, continue.
 			if (artnr == parseInt(artnr)) {
 
-				var YQL = false;
+				var useAjax = false;
 
 				//Should we use the local storage or YQL?
 				if (useDB) {
@@ -180,16 +180,16 @@ $.fn.sbname = function(options) {
 					} else {
 
 						//Since the product didn't exist in the database, use YQL.
-						YQL = true;
+						useAjax = true;
 					}
 				} else {
 
 					//No support for local storage. Use YQL.
-					YQL = true;
+					useAjax = true;
 				}
 
 				//Should we use YQL?
-				if (YQL) {
+				if (useAjax) {
 					var uri = '';
 					// If we should use YQL or try to get the target directly instead.
 					// The reason we (usually) need YQL is to get past the CORS restrictions
@@ -278,19 +278,22 @@ $.fn.sbname.defaults = {
 
 	success: null,
 
-	useYQL: true,
-
+	// The uri to systembolagets search endpoint/resource
 	sbProductSearchResource: "http://beta.systembolaget.se/api/productsearch/search",
 
+	// Wether YQL needs to be used or not. The main reason for using it is to bypass CORS issues on the target site.
+	useYQL: true,
+
+	// Callback for building the YQL resource.
 	buildYQLResource: function(url, data) {
+
 		// Build querystring out of data.
 		var querystring = $.param(data);
+
 		// Build and encode
 		url = encodeURI(url + '?' + querystring);
 		return "https://query.yahooapis.com/v1/public/yql?format=json&q=select%20*%20from%20json%20where%20url%3D'" + url + "'";
 	}
-
-
 };
 
 //Helper Funcs
