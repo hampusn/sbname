@@ -114,26 +114,29 @@
 $.fn.sbname = function(options) {
 
 	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
-	var o = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults);
+	var options = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults),
+			db;
 
 	//Make sure the used collection is a jQuery collection.
 	if (this instanceof jQuery) {
 
-		var useDB = (sbnameDB.hasSupport()) ? true : false;
+		// sbnameDB uses localStorage.
+		var useDB = sbnameDB.hasSupport();
 
-		if (useDB)
-			var db = sbnameDB.init();
+		if (useDB) {
+			db = sbnameDB.init();
+		}
 
 		//Return the elements for 'chainability'.
-		return this.each(function() {
+		return this.each(function(i, element) {
 
 			//Determine if a dom element or a number was passed and proceed accordingly.
-			var artnr = parseArtNr(o.dom.pNumber);
-			if (parseArtNr(o.dom.pNumber) == null) {
+			var artnr = parseArtNr(options.dom.pNumber);
+			if (parseArtNr(options.dom.pNumber) == null) {
 
 				//Set the number element which holds the product number.
-				var pNumber	=	(o.dom.pNumber != '' && typeof o.dom.pNumber == 'string') ? $(this).find(o.dom.pNumber) :
-								(o.dom.pNumber instanceof jQuery) ? o.dom.pNumber :
+				var pNumber	=	(options.dom.pNumber != '' && typeof options.dom.pNumber == 'string') ? $(this).find(options.dom.pNumber) :
+								(options.dom.pNumber instanceof jQuery) ? options.dom.pNumber :
 								$(this);
 
 				//Should we get the product number from the value attribute or the innerhtml?
@@ -147,15 +150,15 @@ $.fn.sbname = function(options) {
 			}
 
 			//Set the name element which will get the product name if found.
-			var pName = 	(o.dom.pName != '' && typeof o.dom.pName == 'string') ? $(this).find(o.dom.pName) :
-							(o.dom.pName instanceof jQuery) ? o.dom.pName :
+			var pName = 	(options.dom.pName != '' && typeof options.dom.pName == 'string') ? $(this).find(options.dom.pName) :
+							(options.dom.pName instanceof jQuery) ? options.dom.pName :
 							$(this);
 
 			//Should we set the product name on the value attribute or in the innerhtml?
 			var pNameType	= (/^(?:area|input)$/i.test(pName[0].tagName)) ? 'value' : 'html';
 
 			//If ErrorFunc exists, bind it to current item in $.each.
-			if (typeof o.error === 'function') $(this).ajaxError(o.error);
+			if (typeof options.error === 'function') $(this).ajaxError(options.error);
 
 			//If artnr is an integer, continue.
 			if (artnr == parseInt(artnr)) {
@@ -170,10 +173,10 @@ $.fn.sbname = function(options) {
 					if(nameObj) {
 
 						//Format name according to o.nameFormat.
-						var name = nameFormat(Array(nameObj.name, nameObj.extended), o.nameFormat);
+						var name = nameFormat(Array(nameObj.name, nameObj.extended), options.nameFormat);
 
 						//Animate
-						anim(pName, pNameType, o, name);
+						anim(pName, pNameType, options, name);
 					} else {
 
 						//Since the product didn't exist in the database, use YQL.
@@ -187,22 +190,37 @@ $.fn.sbname = function(options) {
 
 				//Should we use YQL?
 				if (YQL) {
+					var uri = '';
+					// If we should use YQL or try to get the target directly instead.
+					// The reason we (usually) need YQL is to get past the CORS restrictions
+					// set on the target domain.
+					if (options.useYQL) {
+						uri = options.buildYQLResource(options.sbProductSearchResource, {"searchquery": artnr});
+					} else {
+						// todo
+					}
 
 					//Get the name.
-					$.get(YQLstring(artnr), function(data) {
+					$.get(uri, function(data) {
 
-						//If a name was found, continue.
-						if (data != '' && data.query.results != null) {
+						// Normalizes if using YQL.
+						if (deepTest(data, 'query.results.json')) {
+							data = data.query.results.json;
+						}
 
-							//Makes it shorter below. We don't need the rest anyways.
-							data = data.query.results.span;
+						if (deepTest(data, 'ProductSearchResults')) {
+							data = data.ProductSearchResults;
+						}
 
-							//Select string with the name.
-							//Filter out the product number and also all whitespaces and random newlines which SB seems to like.
-							//d1 contains the name (span.rubrikstor).
-							//And d2 contains the extended part (span.rubrikstortunn).
-							var d1 = cleanName(data[0].content);
-							var d2 = (typeof data[1].content != 'undefined') ? cleanName(data[1].content) : '';
+						// Make sure we have some results
+						if ($.isArray(data) && data.length) {
+							// Todo: Determine which item we should choose if we get multiple in return
+							// For now, go with the first one.
+
+							var product = data[0];
+
+							var d1 = product.ProductNameBold;
+							var d2 = product.ProductNameThin;
 
 							//Store the name to the database, if local storage is supported.
 							if (useDB) {
@@ -212,22 +230,22 @@ $.fn.sbname = function(options) {
 
 							//Format name according to o.nameFormat.
 							//var name = (typeof d2 == 'string' && d2 != '') ? d1 +' '+ d2 : d1;
-							var name = nameFormat(Array(d1,d2),o.nameFormat);
+							var name = nameFormat(Array(d1, d2), options.nameFormat);
 
 							//Animate
-							anim(pName, pNameType, o, name);
-						}else{
+							anim(pName, pNameType, options, name);
+						} else {
 							//Trigger Error since no name was found. Prolly bad product number.
-							if (typeof o.error === 'function') o.error(pName);
+							if (typeof options.error === 'function') options.error(pName);
 						}
 					});
 				}
 			}else{
 				//Trigger Error since the product nr prolly was bad.
-				if (typeof o.error === 'function') o.error(pName);
+				if (typeof options.error === 'function') options.error(pName);
 			}
 			//Unbind errorFunc.
-			if (typeof o.error === 'function') $(this).unbind('ajaxError');
+			if (typeof options.error === 'function') $(this).unbind('ajaxError');
 		});
 
 	}
@@ -258,7 +276,20 @@ $.fn.sbname.defaults = {
 
 	error: null,
 
-	success: null
+	success: null,
+
+	useYQL: true,
+
+	sbProductSearchResource: "http://beta.systembolaget.se/api/productsearch/search",
+
+	buildYQLResource: function(url, data) {
+		// Build querystring out of data.
+		var querystring = $.param(data);
+		// Build and encode
+		url = encodeURI(url + '?' + querystring);
+		return "https://query.yahooapis.com/v1/public/yql?format=json&q=select%20*%20from%20json%20where%20url%3D'" + url + "'";
+	}
+
 
 };
 
@@ -330,12 +361,26 @@ function anim(pName, pNameType, o, name) {
 	});
 }
 
-//The heart of this plugin. I let Yahoo! do all the hard work :)
-//YQL gets the h1-element within the div that has the class 'beverageProperties'. (for some reason there are 2 h1-elements on the product page.)
-//This h1 contains the product name.
-function YQLstring(artNr) {
-	return "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.systembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D"+artNr+"%22%20and%20xpath%3D'%2F%2Fdiv%5B%40class%3D%22beverageProperties%22%5D%2Fdiv%2Fh1%2Fnode()'%0A&format=json&callback="
-	//return "http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D"+artNr+"%22%20and%20css%3D%22div.beverageProperties%20h1%22&format=json&callback="
+
+/**
+ * Checks if deep property exists in object.
+ *
+ * Example: deepTest(obj, 'foo.bar');
+ *
+ *
+ */
+function deepTest(obj, prop) {
+	var parts = prop.split('.');
+	for(var i = 0, l = parts.length; i < l; i++) {
+		var part = parts[i];
+		if(obj !== null && typeof obj === "object" && part in obj) {
+			obj = obj[part];
+		}
+		else {
+			return false;
+		}
+	}
+	return true;
 }
 
 var sbnameDB = {
@@ -437,28 +482,3 @@ var sbnameDB = {
 };
 
 })(jQuery, this, this.document);
-
-/*
-
-YQL for OLD systembolaget.se:
-
-	XPATH:
-	select * from html where url="http://systembolaget.se/SokDrycker/Produkt?VaruNr=2525" and xpath='//span[@class="rubrikstor"]/text() | //span[@class="rubrikstortunn"]/text()'
-	http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSokDrycker%2FProdukt%3FVaruNr%3D"+artnr+"%22%20and%20xpath%3D'%2F%2Fspan%5B%40class%3D%22rubrikstor%22%5D%2Ftext()%20%7C%20%2F%2Fspan%5B%40class%3D%22rubrikstortunn%22%5D%2Ftext()'&format=json&callback=
-
-	CSS-STYLE:
-	use "http://yqlblog.net/samples/data.html.cssselect.xml"; select * from data.html.cssselect where url="http://systembolaget.se/SokDrycker/Produkt?VaruNr=2525" and css="span.rubrikstor"
-	http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSokDrycker%2FProdukt%3FVaruNr%3D2525%22%20and%20css%3D%22span.rubrikstor%22&format=json&callback=
-
-NEW YQL:
-
-	XPATH: --
-	select * from html where url="http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=90060" and xpath='//div[@class="beverageProperties"]/div/h1/node()'
-	http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20html%20where%20url%3D%22http%3A%2F%2Fwww.systembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D90060%22%20and%20xpath%3D'%2F%2Fdiv%5B%40class%3D%22beverageProperties%22%5D%2Fdiv%2Fh1%2Fnode()'%0A&format=json&callback=
-
-	CSS-STYLE:
-	use "http://yqlblog.net/samples/data.html.cssselect.xml"; select * from data.html.cssselect where url="http://www.systembolaget.se/Sok-dryck/Dryck/?varuNr=90060" and css="div.beverageProperties h1"
-	http://query.yahooapis.com/v1/public/yql?q=use%20%22http%3A%2F%2Fyqlblog.net%2Fsamples%2Fdata.html.cssselect.xml%22%3B%20select%20*%20from%20data.html.cssselect%20where%20url%3D%22http%3A%2F%2Fsystembolaget.se%2FSok-dryck%2FDryck%2F%3FvaruNr%3D90060%22%20and%20css%3D%22div.beverageProperties%20h1%22&format=json&callback=
-
-
-*/
