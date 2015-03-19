@@ -301,12 +301,6 @@ function parseArtNr(artNr) {
 	return /^[\d]+/.exec(artNr);
 }
 
-//Strips out the product number/article number and then removes all double spaces, newlines and tabs.
-//If nothing exists except the product number an empty string is returned.
-function cleanName(name) {
-	return ((name = /^[^\(]+/i.exec(name)) != null) ? $.trim((String)(name).replace(/[\s]{2,}/g,' ')) : '';
-}
-
 //Format name according to format {cropIf,toLen,after,extWrap}.
 //Crude 'n' Fugly. Will fix later.
 function nameFormat(name,format) {
