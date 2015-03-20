@@ -208,28 +208,42 @@ $.fn.sbname = function(options) {
 							data = data.ProductSearchResults;
 						}
 
+						// Systembolaget's API returns object and not array if the results is only 1 object.
+						// Convert to array if the result seems to be a valid product and not an array.
+						if (deepTest(data, 'ProductNumber')) {
+							data = [data];
+						}
+
 						// Make sure we have some results
 						if ($.isArray(data) && data.length) {
-							// Todo: Determine which item we should choose if we get multiple in return
-							// For now, go with the first one.
 
-							var product = data[0];
+							// Systembolaget's API is very greedy. Filter out results which
+							// are most likely not the products searched for.
+							data = $.grep(data, function(p) {
+								return p.ProductNumber.substr(0, artnr.length) === artnr;
+							});
 
-							var d1 = product.ProductNameBold;
-							var d2 = product.ProductNameThin;
+							// Make sure we still have any product to work with since the
+							// filtering above could have resulteted in empty array.
+							if (data.length) {
+								var product = data[0],
+										name = product.ProductNameBold !== "null" ? product.ProductNameBold : '',
+										nameExtended = product.ProductNameThin !== "null" ? product.ProductNameThin : '';
 
-							//Store the name to the database, if local storage is supported.
-							if (useDB) {
-								sbnameDB.setItem(artnr, d1, d2);
-								sbnameDB.update();
+								//Store the name to the database, if local storage is supported.
+								if (useDB) {
+									sbnameDB.setItem(artnr, name, nameExtended);
+									sbnameDB.update();
+								}
+
+								//Format name according to o.nameFormat.
+								var name = nameFormat([name, nameExtended], options.nameFormat);
+
+								//Animate
+								anim(pName, pNameType, options, name);
 							}
 
-							//Format name according to o.nameFormat.
-							//var name = (typeof d2 == 'string' && d2 != '') ? d1 +' '+ d2 : d1;
-							var name = nameFormat(Array(d1, d2), options.nameFormat);
-
-							//Animate
-							anim(pName, pNameType, options, name);
+							// TODO: Prolly trigger Error here too.
 						} else {
 							//Trigger Error since no name was found. Prolly bad product number.
 							if (typeof options.error === 'function') options.error(pName);
