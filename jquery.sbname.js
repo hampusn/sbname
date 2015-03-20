@@ -374,7 +374,6 @@ $.sbname = {
 			getInstance: function() {
 				if (! instance) {
 					instance = createInstance();
-					console.log('New instance');
 				}
 
 				return instance;
