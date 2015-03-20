@@ -485,7 +485,7 @@ function anim(pName, pNameType, o, name) {
 		if (pNameType == 'html') {
 			pName.html(name);
 		} else {
-			pName.attr('value',name);
+			pName.val(name);
 		}
 		pName.animate(aIn,o.speedIn);
 	});
