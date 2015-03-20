@@ -122,7 +122,7 @@ $.fn.sbname = function(options) {
 		// sbname.db uses localStorage.
 		// getInstance() will return false if the browser
 		// doesn't support local storage.
-		var db = $.sbname.db.getInstance();
+		db = $.sbname.db.getInstance();
 
 		//Return the elements for 'chainability'.
 		return this.each(function(i, element) {
