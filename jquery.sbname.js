@@ -119,13 +119,10 @@ $.fn.sbname = function(options) {
 
 	//Make sure the used collection is a jQuery collection.
 	if (this instanceof jQuery) {
-
-		// sbnameDB uses localStorage.
-		var useDB = options.cacheResults && sbnameDB.hasSupport();
-
-		if (useDB) {
-			db = sbnameDB.init();
-		}
+		// sbname.db uses localStorage.
+		// getInstance() will return false if the browser
+		// doesn't support local storage.
+		var db = $.sbname.db.getInstance();
 
 		//Return the elements for 'chainability'.
 		return this.each(function(i, element) {
@@ -162,10 +159,10 @@ $.fn.sbname = function(options) {
 				var useAjax = false;
 
 				//Should we use the local storage or YQL?
-				if (useDB) {
+				if (db) {
 
 					//Check if the product exists in the local database
-					var nameObj = sbnameDB.getItem(artnr);
+					var nameObj = db.get(artnr);
 					if(nameObj) {
 
 						//Format name according to o.nameFormat.
@@ -231,9 +228,9 @@ $.fn.sbname = function(options) {
 										nameExtended = product.ProductNameThin !== "null" ? product.ProductNameThin : '';
 
 								//Store the name to the database, if local storage is supported.
-								if (useDB) {
-									sbnameDB.setItem(artnr, name, nameExtended);
-									sbnameDB.update();
+								if (db) {
+									db.set(artnr, name, nameExtended);
+									db.persist();
 								}
 
 								//Format name according to o.nameFormat.
@@ -261,6 +258,129 @@ $.fn.sbname = function(options) {
 	}
 	//Went wrong with the selection. Do nothing and pass the collection on for further chainability.
 	return $(this);
+};
+
+$.sbname = {
+	db: (function() {
+		var instance;
+
+		var createInstance = function() {
+			//This will be the key for the 'database' (json string) stored in localStorage
+			var _name = "sbnameDB";
+
+			//This is the current version of the 'database' scheme
+			var _version = '0.1';
+
+			//This array will contain all names
+			var _names = [];
+
+
+			var hasSupport = function() {
+				return 'localStorage' in window && window['localStorage'] !== null;
+			};
+
+			/**
+			* Persists the current state of the database to local storage.
+			*/
+			var persist = function() {
+				localStorage[_name] = JSON.stringify({
+					"version": _version,
+					"names": _names
+				});
+			};
+
+			var getIndexOfArticle = function(articleNumber) {
+				if (_names.length > 0) {
+					for (var i = _names.length - 1; i >= 0; i--) {
+						if (_names[i].artnr == articleNumber) {
+							return i;
+						}
+					}
+				}
+				return false;
+			}
+
+			var get = function(articleNumber) {
+				var i = getIndexOfArticle(articleNumber);
+				if (i !== false) {
+					return _names[i];
+				}
+				return false;
+			};
+
+			var set = function(articleNumber, name, nameExtended) {
+				var i = getIndexOfArticle(articleNumber),
+						data = {
+							"artnr": articleNumber.toString(),
+							"name": name,
+							"extended": nameExtended
+						};
+
+				if (i !== false) {
+					_names[i] = data;
+				} else {
+					_names[_names.length] = data;
+				}
+			};
+
+			var remove = function(articleNumber) {
+				var i = getIndexOfArticle(articleNumber);
+				if (i !== false) {
+					// Returns true on successful removal. False if index was not removed.
+					return (_names.splice(i, 1).length == 1);
+				}
+				// Not found in array
+				return false;
+			};
+
+
+
+			// No reason to do anything at all if there isn't any support for
+			// local storage.
+			if (! hasSupport) {
+				return false;
+			}
+
+			//Check if a database doesn't already exists
+			if (! localStorage[_name]) {
+				//Store initial values / db scheme
+				localStorage[_name] = JSON.stringify({
+					"version": _version,
+					"names": _names
+				});
+			} else {
+				//Get the stored db and update this singleton
+				persistedData = JSON.parse(localStorage[_name]);
+
+				// TODO: check if Current version is not equal to stored.
+				// Do stuff when schemes doesn't match.
+				// (_version != persistedData.version)
+
+				_version = persistedData.version;
+				_names = persistedData.names;
+			}
+
+			// Return public methods
+			return {
+				"hasSupport": hasSupport,
+				"persist": persist,
+				"get": get,
+				"set": set,
+				"remove": remove
+			};
+		};
+
+		return {
+			getInstance: function() {
+				if (! instance) {
+					instance = createInstance();
+					console.log('New instance');
+				}
+
+				return instance;
+			}
+		};
+	})()
 };
 
 //Default values for the function call.
@@ -392,103 +512,5 @@ function deepTest(obj, prop) {
 	}
 	return true;
 }
-
-var sbnameDB = {
-
-	//This will be the key for the 'database' (json string) stored in localStorage
-	dbname: "sbnameDB",
-
-	//This is the current version of the 'database' scheme
-	version: '0.1',
-
-	//This array will contain all names
-	names: [],
-
-	//Init local storage.
-	init: function() {
-		var db;
-
-		//Check if a database doesn't already exists
-		if (!localStorage[this.dbname]) {
-
-			//Store initial values / db scheme
-			db = {
-				"version": this.version,
-				"names": this.names
-			};
-			localStorage[this.dbname] = JSON.stringify(db);
-		} else {
-
-			//Get the stored db and update this singleton
-			db = JSON.parse(localStorage[this.dbname]);
-			this.version = db.version;
-			this.names = db.names;
-		}
-		return db;
-	},
-
-	//Check if browser supports local storage.
-	hasSupport: function() {
-		return 'localStorage' in window && window['localStorage'] !== null;
-	},
-
-	//Check if an article already exist in the database
-	itemExists: function(artnr) {
-
-		//Pointless to do anything if there aren't any names in the array.
-		if (this.names.length < 1)
-			return;
-
-		for (var i = 0; i < this.names.length; i++) {
-
-			//If a match was found, return the key.
-			if (this.names[i].artnr == artnr)
-				return i;
-		}
-
-		return false;
-	},
-
-	//Get an article based on its article number
-	getItem: function(artnr) {
-		if (this.names.length < 1)
-			return;
-
-		for (var i = 0; i < this.names.length; i++) {
-
-			//If a match was found, return it.
-			if (this.names[i].artnr == artnr)
-				return this.names[i];
-		}
-
-		return false;
-	},
-
-	//Store an article or update an existing based on the article number
-	setItem: function(artnr, name, extended) {
-		if (!this.names)
-			return;
-
-		var i = this.itemExists(artnr);
-		if (typeof i == "number") {
-			this.names[i] = {"artnr": String(artnr), "name": name, "extended": extended};
-		} else {
-			this.names.push({"artnr": String(artnr), "name": name, "extended": extended});
-		}
-	},
-
-	//Update 'database'
-	update: function() {
-		var db = JSON.parse(localStorage[this.dbname]);
-
-		//Doesn't the schemes match? Update.
-		if (db.version != this.version) {
-			//Update Scheme - later
-		}
-
-		//Update database
-		localStorage[this.dbname] = JSON.stringify({"version": this.version, "names": this.names});
-	}
-};
 
 })(jQuery, this, this.document);
