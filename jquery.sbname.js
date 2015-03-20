@@ -115,14 +115,16 @@ $.fn.sbname = function(options) {
 
 	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
 	var options = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults),
-			db;
+			db = false;
 
 	//Make sure the used collection is a jQuery collection.
 	if (this instanceof jQuery) {
 		// sbname.db uses localStorage.
 		// getInstance() will return false if the browser
 		// doesn't support local storage.
-		db = $.sbname.db.getInstance();
+		if (options.cacheResults) {
+			db = $.sbname.db.getInstance();
+		}
 
 		//Return the elements for 'chainability'.
 		return this.each(function(i, element) {
