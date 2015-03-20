@@ -143,7 +143,7 @@ $.fn.sbname = function(options) {
 				var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
 
 				//Get the ArtNr/Product number.
-				artnr =	(pNumberType == 'html') ? pNumber.html() : pNumber.attr('value');
+				artnr =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
 
 				//Strip everything but the product number.
 				artnr = parseArtNr(artnr);
