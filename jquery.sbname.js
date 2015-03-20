@@ -129,25 +129,21 @@ $.fn.sbname = function(options) {
 
 		//Return the elements for 'chainability'.
 		return this.each(function(i, element) {
+			var artnr;
 
-			//Determine if a dom element or a number was passed and proceed accordingly.
-			var artnr = parseArtNr(options.dom.pNumber);
-			if (parseArtNr(options.dom.pNumber) == null) {
+			//Set the number element which holds the product number.
+			var pNumber	=	(options.dom.pNumber != '' && typeof options.dom.pNumber == 'string') ? $(this).find(options.dom.pNumber) :
+							(options.dom.pNumber instanceof jQuery) ? options.dom.pNumber :
+							$(this);
 
-				//Set the number element which holds the product number.
-				var pNumber	=	(options.dom.pNumber != '' && typeof options.dom.pNumber == 'string') ? $(this).find(options.dom.pNumber) :
-								(options.dom.pNumber instanceof jQuery) ? options.dom.pNumber :
-								$(this);
+			//Should we get the product number from the value attribute or the innerhtml?
+			var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
 
-				//Should we get the product number from the value attribute or the innerhtml?
-				var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
+			//Get the ArtNr/Product number.
+			artnr =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
 
-				//Get the ArtNr/Product number.
-				artnr =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
-
-				//Strip everything but the product number.
-				artnr = parseArtNr(artnr);
-			}
+			//Strip everything but the product number.
+			artnr = parseArtNr(artnr);
 
 			//Set the name element which will get the product name if found.
 			var pName = 	(options.dom.pName != '' && typeof options.dom.pName == 'string') ? $(this).find(options.dom.pName) :
@@ -298,10 +294,9 @@ $.fn.sbname.defaults = {
 
 //Helper Funcs
 
-//Filter out irrelevant stuff from the artNr.
-//If the passed argument begins with a letter it counts as not a product number and null is returned.
+//Filter out irrelevant stuff (everything but digits) from the artNr.
 function parseArtNr(artNr) {
-	return /^[\d]+/.exec(artNr);
+	return artNr.replace(/\D/g, '');
 }
 
 //Format name according to format {cropIf,toLen,after,extWrap}.
