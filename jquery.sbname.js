@@ -121,7 +121,7 @@ $.fn.sbname = function(options) {
 	if (this instanceof jQuery) {
 
 		// sbnameDB uses localStorage.
-		var useDB = sbnameDB.hasSupport();
+		var useDB = options.cacheResults && sbnameDB.hasSupport();
 
 		if (useDB) {
 			db = sbnameDB.init();
@@ -279,6 +279,10 @@ $.fn.sbname.defaults = {
 
 	// Wether YQL needs to be used or not. The main reason for using it is to bypass CORS issues on the target site.
 	useYQL: true,
+
+	// Wether to cache the results in local storage or not.
+	// Will be ignored if local storage isn't supported in the browser.
+	cacheResults: true,
 
 	// Callback for building the YQL resource.
 	buildYQLResource: function(url, data) {
