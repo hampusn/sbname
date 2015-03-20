@@ -126,7 +126,7 @@ $.fn.sbname = function(options) {
 
 		//Return the elements for 'chainability'.
 		return this.each(function(i, element) {
-			var artnr;
+			var articleNumber;
 
 			//Set the number element which holds the product number.
 			var pNumber	=	(options.dom.pNumber != '' && typeof options.dom.pNumber == 'string') ? $(this).find(options.dom.pNumber) :
@@ -137,10 +137,10 @@ $.fn.sbname = function(options) {
 			var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
 
 			//Get the ArtNr/Product number.
-			artnr =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
+			articleNumber =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
 
 			//Strip everything but the product number.
-			artnr = parseArtNr(artnr);
+			articleNumber = parseArticleNumber(articleNumber);
 
 			//Set the name element which will get the product name if found.
 			var pName = 	(options.dom.pName != '' && typeof options.dom.pName == 'string') ? $(this).find(options.dom.pName) :
@@ -153,8 +153,8 @@ $.fn.sbname = function(options) {
 			//If ErrorFunc exists, bind it to current item in $.each.
 			if (typeof options.error === 'function') $(this).ajaxError(options.error);
 
-			//If artnr is an integer, continue.
-			if (artnr == parseInt(artnr)) {
+			//If articleNumber is an integer, continue.
+			if (articleNumber == parseInt(articleNumber)) {
 
 				var useAjax = false;
 
@@ -162,7 +162,7 @@ $.fn.sbname = function(options) {
 				if (db) {
 
 					//Check if the product exists in the local database
-					var nameObj = db.get(artnr);
+					var nameObj = db.get(articleNumber);
 					if(nameObj) {
 
 						//Format name according to o.nameFormat.
@@ -188,7 +188,7 @@ $.fn.sbname = function(options) {
 					// The reason we (usually) need YQL is to get past the CORS restrictions
 					// set on the target domain.
 					if (options.useYQL) {
-						uri = options.buildYQLResource(options.sbProductSearchResource, {"searchquery": artnr});
+						uri = options.buildYQLResource(options.sbProductSearchResource, {"searchquery": articleNumber});
 					} else {
 						// todo
 					}
@@ -217,7 +217,7 @@ $.fn.sbname = function(options) {
 							// Systembolaget's API is very greedy. Filter out results which
 							// are most likely not the products searched for.
 							data = $.grep(data, function(p) {
-								return p.ProductNumber.substr(0, artnr.length) === artnr;
+								return p.ProductNumber.substr(0, articleNumber.length) === articleNumber;
 							});
 
 							// Make sure we still have any product to work with since the
@@ -229,7 +229,7 @@ $.fn.sbname = function(options) {
 
 								//Store the name to the database, if local storage is supported.
 								if (db) {
-									db.set(artnr, name, nameExtended);
+									db.set(articleNumber, name, nameExtended);
 									db.persist();
 								}
 
@@ -432,9 +432,9 @@ $.fn.sbname.defaults = {
 
 //Helper Funcs
 
-//Filter out irrelevant stuff (everything but digits) from the artNr.
-function parseArtNr(artNr) {
-	return artNr.replace(/\D/g, '');
+//Filter out irrelevant stuff (everything but digits) from the articleNumber.
+function parseArticleNumber(articleNumber) {
+	return articleNumber.replace(/\D/g, '');
 }
 
 //Format name according to format {cropIf,toLen,after,extWrap}.
