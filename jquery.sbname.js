@@ -183,7 +183,7 @@ $.fn.sbname = function(options) {
 					useAjax = true;
 				}
 
-				//Should we use YQL?
+				//Should we use ajax?
 				if (useAjax) {
 					var uri = '';
 					// If we should use YQL or try to get the target directly instead.
@@ -196,21 +196,33 @@ $.fn.sbname = function(options) {
 					}
 
 					//Get the name.
-					$.get(uri, function(data) {
-
+					$.ajax({
+						'url': uri,
+						'dataType': 'json'
+					}).done(function(data, textStatus, jqXHR) {
 						// Normalizes if using YQL.
 						if (deepTest(data, 'query.results.json')) {
 							data = data.query.results.json;
 						}
-
+						// Reduce to actual search results.
 						if (deepTest(data, 'ProductSearchResults')) {
 							data = data.ProductSearchResults;
 						}
-
-						// Systembolaget's API returns object and not array if the results is only 1 object.
-						// Convert to array if the result seems to be a valid product and not an array.
+						// Systembolaget's API returns object and not array if the results
+						// is only 1 object. Convert to array if the result seems to be a
+						// valid product and not an array.
 						if (deepTest(data, 'ProductNumber')) {
 							data = [data];
+						}
+						// Check if a success callback exist.
+						if (typeof options.done === 'function') {
+							// Success callback can return false to halt the rest of the
+							// standard execution (replacement and animation of prod name).
+							var callbackResults = options.done(data, textStatus, jqXHR);
+
+							if (callbackResults === false) {
+								return;
+							}
 						}
 
 						// Make sure we have some results
@@ -249,22 +261,15 @@ $.fn.sbname = function(options) {
 								//Animate
 								anim(pName, pNameType, options, name);
 							}
-
-							// TODO: Prolly trigger Error here too.
-						} else {
-							//Trigger Error since no name was found. Prolly bad product number.
-							if (typeof options.error === 'function') options.error(pName);
+						}
+					}).fail(function(jqXHR, textStatus, errorThrown) {
+						if (typeof options.fail === 'function') {
+							options.fail(jqXHR, textStatus, errorThrown);
 						}
 					});
 				}
-			}else{
-				//Trigger Error since the product nr prolly was bad.
-				if (typeof options.error === 'function') options.error(pName);
 			}
-			//Unbind errorFunc.
-			if (typeof options.error === 'function') $(this).unbind('ajaxError');
 		});
-
 	}
 	//Went wrong with the selection. Do nothing and pass the collection on for further chainability.
 	return $(this);
