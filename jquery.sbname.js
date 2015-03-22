@@ -239,7 +239,8 @@ $.fn.sbname = function(options) {
 							if (data.length) {
 								var product = data[0],
 										name = '',
-										nameExtended = '';
+										nameExtended = '',
+										formattedName = '';
 
 								if (product.ProductNameBold !== 'null') {
 									name = product.ProductNameBold;
@@ -255,11 +256,15 @@ $.fn.sbname = function(options) {
 									db.persist();
 								}
 
-								//Format name according to o.nameFormat.
-								var name = nameFormat([name, nameExtended], options.nameFormat);
+								//Format name according to options.textFormat
+								if (typeof options.textFormat === 'function') {
+									formattedName = options.textFormat(name, nameExtended);
+								} else {
+									formattedName = name + ' ' + nameExtended;
+								}
 
 								//Animate
-								anim(pName, pNameType, options, name);
+								anim(pName, pNameType, options, formattedName);
 							}
 						}
 					}).fail(function(jqXHR, textStatus, errorThrown) {
@@ -415,11 +420,31 @@ $.fn.sbname.defaults = {
 	//For a description, see above (top).
 	dom: {pNumber: '', pName: ''},
 
-	//Argument for formatting of the product name.
-	nameFormat: {cropIf: 0, toLen: 0, after: '', extWrap: 'span'},
+	/**
+	 * Formatting function which should take two strings and
+	 * return a formatted result.
+	 */
+	textFormat: function(name, nameExtended) {
+		if (nameExtended) {
+			return name + ' <span>' + nameExtended + '</span>';
+		}
+		return name;
+	},
 
+	/**
+	 * Extra callback for jqXHR failure.
+	 *
+	 * Should be a function with the parameters:
+	 * function( jqXHR, textStatus, errorThrown ) {};
+	 */
 	fail: null,
 
+	/**
+	 * Extra callback for jqXHR done.
+	 *
+	 * Should be a function with the parameters:
+	 * function( data, textStatus, jqXHR ) {};
+	 */
 	done: null,
 
 	// The uri to systembolagets search endpoint/resource
@@ -449,43 +474,6 @@ $.fn.sbname.defaults = {
 //Filter out irrelevant stuff (everything but digits) from the articleNumber.
 function parseArticleNumber(articleNumber) {
 	return articleNumber.replace(/\D/g, '');
-}
-
-//Format name according to format {cropIf,toLen,after,extWrap}.
-//Crude 'n' Fugly. Will fix later.
-function nameFormat(name,format) {
-	var cropIf = parseInt(format.cropIf);
-	var toLen = parseInt(format.toLen);
-	var fName = '';
-	var after = (format.after != '' && typeof format.after == 'string') ? format.after : '';
-
-	if (typeof name == 'string'
-		|| (typeof format.extWrap != 'string' || format.extWrap == '')
-		|| (typeof name == 'object'
-			&& ((typeof format.extWrap != 'string' && format.extWrap != '')
-				|| toLen <= name[0].length + 1))
-	) {
-		if (typeof name == 'object' && name[0] != null) name = name[0] + ' ' + name[1];
-		if (cropIf > 0 && name.length > cropIf) {
-			fName = (toLen > 0 && toLen < cropIf) ?
-					name.substr(0, toLen) :
-					name.substr(0, cropIf);
-
-			fName = $.trim(fName) + after;
-		} else {
-			fName = name;
-		}
-	} else {
-		var extW = new Array('<'+format.extWrap+'>','</'+format.extWrap+'>');
-
-		if (cropIf > 0 && name[0].length + name[1].length + 1 > cropIf) {
-			fName = name[0] + ' ' + extW[0] + $.trim(name[1].substr(0, (toLen - (name[0].length + 1)) )) + after + extW[1];
-		} else {
-			fName = name[0] + ' ' + extW[0] + name[1] + extW[1];
-		}
-	}
-
-	return fName;
 }
 
 function anim(pName, pNameType, o, name) {
