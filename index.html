@@ -4,15 +4,15 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta http-equiv="Content-Language" content="se-sv" />
     <title>sbname.js - A jQuery plugin</title>
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 	<script type="text/javascript" src="http://github.com/hampusn/sbname/raw/master/jquery.sbname.js"></script>
 	<script type="text/javascript">
 		$(function() {
 			$('#nr').focus();
-			
+
 			var d = {outer: $('#container'), pNumber: '#nr', pName: '#name'}
 			var nf = {extWrap: 'span'};
-			
+
 			$('#getName').click(function(e) {
 				$('#name').html('<img src="ajax-loader.gif" alt="Loading..." />');
 				$('#name').find('img').animate({opacity: 1},200);
@@ -28,15 +28,15 @@
 		html,body,h1,p,span,input,a {margin:0;padding:0;border:0;}
 		html,body,input {font-family: 'Century Schoolbook', Georgia, serif;}
 		html,body {background: #f8f8f8;font-size: 100%;text-align: center;}
-		
+
 		h1 {font-size: 4em; margin-top: 1em; font-weight: normal; letter-spacing: -0.05em; color: #444;}
 		h1 span {color: #ccc;}
 		body > span {font-size: 0.9em;color: #aaa;}
 		span a {color: #888; text-decoration: underline;}
 		span a:hover {color: #333; text-decoration: none;}
-		
+
 		#container {width: 30em; margin:4em auto; padding: 1em;}
-			
+
 			#name img {opacity: 0;width: 1em;}
 			#name, #nr, #getName {padding: 0.7em 1em;}
 			#name {margin-bottom: 1em; font-size: 1.5em; opacity: 0.3; color: #222;text-shadow: 0 0 5px #fff;}
@@ -52,10 +52,10 @@
 				}
 			#nr {text-align: center;}
 			#getName {color: #222;}
-			
+
 			#nr:hover, #nr:focus, #getName:hover, #getName:focus {background: #fafafa;border-color: #888;}
 			#getName:hover {text-decoration: none;}
-		
+
 			#tips {margin-top: 6em;font-size: 0.8em;letter-spacing: 0.1em;color: #888; line-height: 1.6em;}
 	</style>
 </head>
@@ -65,7 +65,7 @@
 		<a href="http://github.com/hampusn/sbname">sbname on github</a> &bull;
 		<a href="http://github.com/hampusn/sbname/raw/master/jquery.sbname.js">jquery.sbname.js</a>
 	</span>
-	
+
 	<div id="container">
 		<p id="name">Product name</p>
 		<input id="nr" type="text" />
