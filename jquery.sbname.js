@@ -37,22 +37,7 @@
  *
  *
  * Default options:
- *
- *		speedIn: 		The animation speed to use when the product name is animated in.
- *						-Defaults to 400 (ms).
- *
- *		speedOut: 		The animation speed to use when the product number is animated out.
- *						-Defaults to 500 (ms).
- *
- *		argsIn: 		Extra Arguments to animate In. To skip the opacity,
- *						pass an empty object to argsIn. E.g. $(selector).sbname({argsIn: {} });
- *						-Defaults to { _currentOpacityOfObject_ }.
- *
- *		argsOut: 		Extra Arguments to animate Out. To skip the opacity,
- *						do the same as above, but for argsOut.
- *						-Defaults to {opacity:0}.
- *
- *		dom: 			When it isn't suited to just switch the product number to the product name
+ *		dom: 		When it isn't suited to just switch the product number to the product name
  *						due to the html structure, this argument comes in handy. Picture the following
  *						markup:
  *
@@ -102,17 +87,15 @@
  *
  *						-Defaults to {cropIf: 0, toLen: 0, after: ''}.
  *
- *		error:			Desc. Coming soon...,
+ *		fail:			Desc. Coming soon...,
  *						....
  *						-Defaults to '' (none).
  *
- *		success:
+ *		done:
  *
  *
  */
-
 $.fn.sbname = function(options) {
-
 	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
 	var options = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults),
 			db = false;
@@ -166,12 +149,21 @@ $.fn.sbname = function(options) {
 					//Check if the product exists in the local database
 					var nameObj = db.get(articleNumber);
 					if(nameObj) {
-
-						//Format name according to o.nameFormat.
-						var name = nameFormat(Array(nameObj.name, nameObj.extended), options.nameFormat);
+						var formattedName = '';
+						//Format name according to options.textFormat
+						if (typeof options.textFormat === 'function') {
+							formattedName = options.textFormat(nameObj.name, nameObj.extended);
+						} else {
+							formattedName = nameObj.name + ' ' + nameObj.extended;
+						}
 
 						//Animate
-						anim(pName, pNameType, options, name);
+						if (typeof options.animate === 'function') {
+							var animOut = options.animation.out || {},
+									animIn  = options.animation.in || {};
+
+							options.animate(animOut, animIn, pName, formattedName);
+						}
 					} else {
 
 						//Since the product didn't exist in the database, use YQL.
@@ -264,7 +256,11 @@ $.fn.sbname = function(options) {
 								}
 
 								//Animate
-								anim(pName, pNameType, options, formattedName);
+								if (typeof options.animate === 'function') {
+									var animOut = options.animation.out || {},
+											animIn  = options.animation.in || {};
+									options.animate(animOut, animIn, pName, formattedName);
+								}
 							}
 						}
 					}).fail(function(jqXHR, textStatus, errorThrown) {
@@ -404,21 +400,61 @@ $.sbname = {
 
 //Default values for the function call.
 $.fn.sbname.defaults = {
-
-	//The animation speed for easeIn.
-	speedIn: 400,
-
-	//The animation speed for easeOut.
-	speedOut: 500,
-
-	//Extra Arguments to animate In.
-	argsIn: {},
-
-	//Extra Arguments to animate Out. To skip the opacity, pass an empty object to argsOut. e.g. $(selector).sbname({argsOut: {} });
-	argsOut: {opacity:0},
-
 	//For a description, see above (top).
 	dom: {pNumber: '', pName: ''},
+
+	/**
+	 * Animation options.
+	 *
+	 * @see http://api.jquery.com/animate/#animate-properties-options
+	 */
+	animation: {
+		// When animating out (usually a fade out).
+		out: {
+			// What properties to animate.
+			properties: {
+				"opacity": 0
+			},
+			// Additional options to pass to the animate function
+			options: {
+				"duration": 500
+			}
+		},
+		// When animating in (usually a fade in).
+		in: {
+			properties: {
+				"opacity": 1
+			},
+			options: {
+				"duration": 400
+			}
+		}
+	},
+
+	/**
+	 * Standard animate callback. Fades out, changes text and fades in again.
+	 */
+	animate: function(animOut, animIn, nameHolder, name) {
+		// Complete callback run when out animation has finished.
+		var outComplete = function() {
+			//Should we set the product name on the value attribute or in the innerhtml?
+			var holderType = (/^(?:area|input)$/i.test(nameHolder[0].tagName)) ? 'value' : 'html';
+			if (holderType == 'value') {
+				nameHolder.val(name);
+			} else {
+				nameHolder.html(name);
+			}
+			// Animate in again
+			nameHolder.animate(animIn.properties, animIn.options);
+		};
+		// Merge in current opacity state of nameHolder
+		// so we know what to animate back to.
+		animIn.properties = $.extend({'opacity': nameHolder.css('opacity')}, animIn.properties);
+		// Use our own complete callback above.
+		animOut.options.complete = outComplete;
+		// Animate out
+		nameHolder.animate(animOut.properties, animOut.options);
+	},
 
 	/**
 	 * Formatting function which should take two strings and
@@ -447,22 +483,29 @@ $.fn.sbname.defaults = {
 	 */
 	done: null,
 
-	// The uri to systembolagets search endpoint/resource
+	/**
+	 * The uri to systembolagets search endpoint/resource
+	 */
 	sbProductSearchResource: "http://beta.systembolaget.se/api/productsearch/search",
 
-	// Wether YQL needs to be used or not. The main reason for using it is to bypass CORS issues on the target site.
+	/**
+	 * Wether YQL needs to be used or not. The main reason
+	 * for using it is to bypass CORS issues on the target site.
+	 */
 	useYQL: true,
 
-	// Wether to cache the results in local storage or not.
-	// Will be ignored if local storage isn't supported in the browser.
+	/**
+	 * Wether to cache the results in local storage or not.
+	 * Will be ignored if local storage isn't supported in the browser.
+	 */
 	cacheResults: true,
 
-	// Callback for building the YQL resource.
+	/**
+	 * Callback for building the YQL resource.
+	 */
 	buildYQLResource: function(url, data) {
-
 		// Build querystring out of data.
 		var querystring = $.param(data);
-
 		// Build and encode
 		url = encodeURI(url + '?' + querystring);
 		return "https://query.yahooapis.com/v1/public/yql?format=json&q=select%20*%20from%20json%20where%20url%3D'" + url + "'";
@@ -471,35 +514,18 @@ $.fn.sbname.defaults = {
 
 //Helper Funcs
 
-//Filter out irrelevant stuff (everything but digits) from the articleNumber.
+/**
+ * Filter out irrelevant stuff (everything but digits)
+ * from the articleNumber.
+ */
 function parseArticleNumber(articleNumber) {
 	return articleNumber.replace(/\D/g, '');
 }
-
-function anim(pName, pNameType, o, name) {
-
-	//Set animation args.
-	var aOut = $.extend({}, o.argsOut);
-	var aIn = $.extend({}, {opacity: pName.css('opacity')}, o.argsIn);
-
-	//Animate Out, Set text, Animate In.
-	pName.animate(aOut, o.speedOut, function() {
-		if (pNameType == 'html') {
-			pName.html(name);
-		} else {
-			pName.val(name);
-		}
-		pName.animate(aIn,o.speedIn);
-	});
-}
-
 
 /**
  * Checks if deep property exists in object.
  *
  * Example: deepTest(obj, 'foo.bar');
- *
- *
  */
 function deepTest(obj, prop) {
 	var parts = prop.split('.');
