@@ -418,9 +418,9 @@ $.fn.sbname.defaults = {
 	//Argument for formatting of the product name.
 	nameFormat: {cropIf: 0, toLen: 0, after: '', extWrap: 'span'},
 
-	error: null,
+	fail: null,
 
-	success: null,
+	done: null,
 
 	// The uri to systembolagets search endpoint/resource
 	sbProductSearchResource: "http://beta.systembolaget.se/api/productsearch/search",
