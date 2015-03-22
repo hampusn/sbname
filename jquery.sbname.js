@@ -6,7 +6,7 @@
  * Get a product's name, by it's product number, from systembolaget.se (which is the website
  * of the state-owned company/store for liqour & other alcoholic beverages in Sweden.)
  *
- * Version 0.3.0
+ * Version 1.0.0
  *
  * by Hampus Nordin
  * http://hampusnordin.se/
@@ -85,7 +85,7 @@
  *
  *   animate:
  *     function(animOut, animIn, nameHolder, name) returns void
- *     
+ *
  *
  */
 $.fn.sbname = function(options) {
