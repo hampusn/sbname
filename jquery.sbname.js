@@ -226,8 +226,16 @@ $.fn.sbname = function(options) {
 							// filtering above could have resulteted in empty array.
 							if (data.length) {
 								var product = data[0],
-										name = product.ProductNameBold !== "null" ? product.ProductNameBold : '',
-										nameExtended = product.ProductNameThin !== "null" ? product.ProductNameThin : '';
+										name = '',
+										nameExtended = '';
+
+								if (product.ProductNameBold !== 'null') {
+									name = product.ProductNameBold;
+								}
+
+								if (product.ProductNameThin !== 'null') {
+									nameExtended = product.ProductNameThin;
+								}
 
 								//Store the name to the database, if local storage is supported.
 								if (db) {
