@@ -8,14 +8,6 @@
  *
  * Version 0.3.0
  *
- * Comming:
- * -General optimization
- * -Rewritten nameFormat()
- * -Better documentation
- *
- * New features (possibly):
- * -?
- *
  * by Hampus Nordin
  * http://hampusnordin.se/
  * http://github.com/hampusn/sbname/
@@ -36,63 +28,64 @@
  *		Default parameters are below this list of accepted parameters.
  *
  *
- * Default options:
- *		dom: 		When it isn't suited to just switch the product number to the product name
- *						due to the html structure, this argument comes in handy. Picture the following
- *						markup:
+ * Options:
+ *   dom:
+ *     When it isn't suited to just switch the product number to the product name
+ *     due to the html structure, this argument comes in handy. Picture the following
+ *     markup:
  *
- *							<p>This is a sentence with a product number like <span>2525</span> which
- *							happens to be Baron de Ley.</p>
+ *     <p>This is a sentence with a product number like <span>2525</span> which
+ *     happens to be Baron de Ley.</p>
  *
- *						This markup allows us to change the span-elements content without any
- *						complications. This is what sbname will do per default. However, the dom argument
- *						comes quite in handy if your markup looks something like this:
+ *     This markup allows us to change the span-elements content without any
+ *     complications. This is what sbname will do per default. However, the dom argument
+ *     comes quite in handy if your markup looks something like this:
  *
- *							<ul>
- *								<li>
- *									<span class="nr">2525</span>
- *									<span class="name"></span>
- *								</li>
- *								<li>...
- *							</ul>
+ *     <ul>
+ *       <li>
+ *         <span class="nr">2525</span>
+ *         <span class="name"></span>
+ *       </li>
+ *       <li>...
+ *     </ul>
  *
- *						If you got a list with a structure for the list-items like this,
- *						and want to take the number of 'span.nr' and set the product name
- *						on 'span.name' then you'll need to set the dom argument accordingly:
+ *     If you got a list with a structure for the list-items like this,
+ *     and want to take the number of 'span.nr' and set the product name
+ *     on 'span.name' then you'll need to set the dom argument accordingly:
  *
- *						The jQuery selector which sbname was called with (e.g. $('THIS RIGHT HERE').sbname();)
- *						should be the parent/ancestor of both the number and target elements.
- *						It doesn't have to be the closest mutual parent/ancestor, but it helps.
- *						It mustn't be a parent which has more than one descendant/child of either
- *						a number or a target element. In this case it must be the li and not the ul element.
- *						-This is the previous dom.outer.
+ *     The jQuery selector which sbname was called with (e.g. $('THIS RIGHT HERE').sbname();)
+ *     should be the parent/ancestor of both the number and target elements.
+ *     It doesn't have to be the closest mutual parent/ancestor, but it helps.
+ *     It mustn't be a parent which has more than one descendant/child of either
+ *     a number or a target element. In this case it must be the li and not the ul element.
+ *     -This is the previous dom.outer.
  *
- *						dom.pNumber = 	This should be set to whatever element to get the product number from.
- *										If it's not a jQuery object, a search will be made for matches inside the jQuery selector.
- *										E.g. pass '.nr' to search for a descendant/child (with the class 'nr') to the jQuery selector.
+ *     dom.pNumber
+ *       This should be set to whatever element to get the product number from.
+ *       If it's not a jQuery object, a search will be made for matches inside the jQuery selector.
+ *       E.g. pass '.nr' to search for a descendant/child (with the class 'nr') to the jQuery selector.
  *
- *						dom.pName =		Just like pNumber but for the target element which will get the product name inserted.
+ *     dom.pName
+ *       Just like pNumber but for the target element which will get the product name inserted.
  *
- *						-Defaults to {pNumber: '', pName: ''}.
+ *     -Defaults to {pNumber: '', pName: ''}.
  *
- *		nameFormat:		Cropping options of name.
- *						If the product name is longer than nameFormat.cropIf, the name
- *						will be shortened to nameFormat.len characters. If nameFormat.after
- *						is also set, it will be added to the end of the shortened name.
- *						Example:
+ *   textFormat:
+ *     function(name, nameExtended) returns string
+ *     A function which formats the product name with the two arguments
+ *     name and nameExtended and returns formatted html.
  *
- *						ProductName = 	'Saintsbury Lee Vineyard Pinot Noir 2007'; (length: 39)
- *						nameFormat = 	{cropIf: 25, len: 20, after: '...'};
- *						result =		'Saintsbury Lee Viney...';
+ *   fail:
+ *     function(jqXHR, textStatus, errorThrown) returns jqXHR
+ *     Extra callback for jqXHR failure.
  *
- *						-Defaults to {cropIf: 0, toLen: 0, after: ''}.
+ *   done:
+ *     function(data, textStatus, jqXHR) returns jqXHR
+ *     Extra callback for jqXHR done.
  *
- *		fail:			Desc. Coming soon...,
- *						....
- *						-Defaults to '' (none).
- *
- *		done:
- *
+ *   animate:
+ *     function(animOut, animIn, nameHolder, name) returns void
+ *     
  *
  */
 $.fn.sbname = function(options) {
@@ -508,6 +501,7 @@ $.fn.sbname.defaults = {
 		var querystring = $.param(data);
 		// Build and encode
 		url = encodeURI(url + '?' + querystring);
+		// select * from json where url=' URL '
 		return "https://query.yahooapis.com/v1/public/yql?format=json&q=select%20*%20from%20json%20where%20url%3D'" + url + "'";
 	}
 };
