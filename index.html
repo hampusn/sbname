@@ -10,16 +10,23 @@
 		$(function() {
 			$('#nr').focus();
 
-			var d = {outer: $('#container'), pNumber: '#nr', pName: '#name'}
-			var nf = {extWrap: 'span'};
+			var dom = {
+				outer: $('#container'),
+				pNumber: '#nr',
+				pName: '#name'
+			};
 
 			$('#getName').click(function(e) {
 				$('#name').html('<img src="ajax-loader.gif" alt="Loading..." />');
-				$('#name').find('img').animate({opacity: 1},200);
-				$('#container').sbname({dom: d, nameFormat: nf, argsIn: {opacity: 1}, error: function(elem) {
-					elem.html('Nothin found.')
-				}
-				});
+				$('#name').find('img').animate({opacity: 1}, 200);
+				$('#container').sbname({dom: dom, fail: function(elem) {
+					elem.html('Nothin found.');
+				}});
+				e.preventDefault();
+			});
+
+			$('#tips a').click(function(e) {
+				$(this).sbname();
 				e.preventDefault();
 			});
 		});
@@ -32,8 +39,8 @@
 		h1 {font-size: 4em; margin-top: 1em; font-weight: normal; letter-spacing: -0.05em; color: #444;}
 		h1 span {color: #ccc;}
 		body > span {font-size: 0.9em;color: #aaa;}
-		span a {color: #888; text-decoration: underline;}
-		span a:hover {color: #333; text-decoration: none;}
+		a {color: #888; text-decoration: underline;}
+		a:hover {color: #333; text-decoration: none;}
 
 		#container {width: 30em; margin:4em auto; padding: 1em;}
 
@@ -73,7 +80,7 @@
 		<p id="tips">
 			Some product numbers to<br />
 			try if you don't know any:<br />
-			1570 &bull; 6792 &bull; 363 &bull; 1948
+			<a href="#">12363</a> &bull; <a href="#">6792</a> &bull; <a href="#">36301</a> &bull; <a href="#">157003</a>
 		</p>
 	</div>
 </body>
