@@ -89,11 +89,11 @@
  *
  */
 $.fn.sbname = function(options) {
-	//Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
+	// Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
 	var options = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults),
 			db = false;
 
-	//Make sure the used collection is a jQuery collection.
+	// Make sure the used collection is a jQuery collection.
 	if (this instanceof jQuery) {
 		// sbname.db uses localStorage.
 		// getInstance() will return false if the browser
@@ -102,73 +102,65 @@ $.fn.sbname = function(options) {
 			db = $.sbname.db.getInstance();
 		}
 
-		//Return the elements for 'chainability'.
+		// Return the elements for 'chainability'.
 		return this.each(function(i, element) {
-			var articleNumber;
+			var articleNumber, $numberHolder, $nameHolder, numberType,
+				$element = $(element);
 
-			//Set the number element which holds the product number.
-			var pNumber	=	(options.dom.pNumber != '' && typeof options.dom.pNumber == 'string') ? $(this).find(options.dom.pNumber) :
-							(options.dom.pNumber instanceof jQuery) ? options.dom.pNumber :
-							$(this);
+			// Set the number element which holds the article number 
+			// based on the passed options.
+			$numberHolder = findHolder($element, options.dom.pNumber);
 
-			//Should we get the product number from the value attribute or the innerhtml?
-			var pNumberType = (/^(?:area|input)$/i.test(pNumber[0].tagName)) ? 'value' : 'html';
+			// Get the article number from the number holder.
+			numberType = $numberHolder.prop('tagName');
+			if (numberType === 'INPUT' || numberType === 'TEXTAREA') {
+				articleNumber = $numberHolder.val(); // From value
+			} else {
+				articleNumber = $numberHolder.text(); // From content (text/html)
+			}
 
-			//Get the ArtNr/Product number.
-			articleNumber =	(pNumberType == 'html') ? pNumber.html() : pNumber.val();
-
-			//Strip everything but the product number.
+			// Strip everything but the product number.
 			articleNumber = parseArticleNumber(articleNumber);
 
-			//Set the name element which will get the product name if found.
-			var pName = 	(options.dom.pName != '' && typeof options.dom.pName == 'string') ? $(this).find(options.dom.pName) :
-							(options.dom.pName instanceof jQuery) ? options.dom.pName :
-							$(this);
+			// Set the name holder element which will hold the product name if found.
+			$nameHolder = findHolder($element, options.dom.pName);
 
-			//Should we set the product name on the value attribute or in the innerhtml?
-			var pNameType	= (/^(?:area|input)$/i.test(pName[0].tagName)) ? 'value' : 'html';
-
-			//If ErrorFunc exists, bind it to current item in $.each.
-			if (typeof options.error === 'function') $(this).ajaxError(options.error);
-
-			//If articleNumber is an integer, continue.
+			// If articleNumber is an integer, continue.
 			if (articleNumber == parseInt(articleNumber)) {
 
 				var useAjax = false;
 
-				//Should we use the local storage or YQL?
+				// Should we use the local storage or YQL?
 				if (db) {
 
-					//Check if the product exists in the local database
+					// Check if the product exists in the local database
 					var nameObj = db.get(articleNumber);
 					if(nameObj) {
 						var formattedName = '';
-						//Format name according to options.textFormat
+						// Format name according to options.textFormat
 						if (typeof options.textFormat === 'function') {
 							formattedName = options.textFormat(nameObj.name, nameObj.extended);
 						} else {
 							formattedName = nameObj.name + ' ' + nameObj.extended;
 						}
 
-						//Animate
+						// Animate
 						if (typeof options.animate === 'function') {
 							var animOut = options.animation.out || {},
-									animIn  = options.animation.in || {};
+								animIn  = options.animation.in || {};
 
-							options.animate(animOut, animIn, pName, formattedName);
+							options.animate(animOut, animIn, $nameHolder, formattedName);
 						}
 					} else {
-
-						//Since the product didn't exist in the database, use YQL.
+						// Since the product didn't exist in the database, use YQL.
 						useAjax = true;
 					}
 				} else {
-
-					//No support for local storage. Use YQL.
+					// No support for local storage. Use YQL.
 					useAjax = true;
 				}
 
-				//Should we use ajax?
+				// Should we use ajax?
 				if (useAjax) {
 					var uri = '';
 					// If we should use YQL or try to get the target directly instead.
@@ -180,7 +172,7 @@ $.fn.sbname = function(options) {
 						// todo
 					}
 
-					//Get the name.
+					// Get the name.
 					$.ajax({
 						'url': uri,
 						'dataType': 'json'
@@ -223,9 +215,9 @@ $.fn.sbname = function(options) {
 							// filtering above could have resulteted in empty array.
 							if (data.length) {
 								var product = data[0],
-										name = '',
-										nameExtended = '',
-										formattedName = '';
+									name = '',
+									nameExtended = '',
+									formattedName = '';
 
 								if (product.ProductNameBold !== 'null') {
 									name = product.ProductNameBold;
@@ -235,24 +227,25 @@ $.fn.sbname = function(options) {
 									nameExtended = product.ProductNameThin;
 								}
 
-								//Store the name to the database, if local storage is supported.
+								// Store the name to the database, if local storage is supported.
 								if (db) {
 									db.set(articleNumber, name, nameExtended);
 									db.persist();
 								}
 
-								//Format name according to options.textFormat
+								// Format name according to options.textFormat
 								if (typeof options.textFormat === 'function') {
 									formattedName = options.textFormat(name, nameExtended);
 								} else {
 									formattedName = name + ' ' + nameExtended;
 								}
 
-								//Animate
+								// Animate
 								if (typeof options.animate === 'function') {
 									var animOut = options.animation.out || {},
-											animIn  = options.animation.in || {};
-									options.animate(animOut, animIn, pName, formattedName);
+										animIn  = options.animation.in || {};
+
+									options.animate(animOut, animIn, $nameHolder, formattedName);
 								}
 							}
 						}
@@ -265,7 +258,7 @@ $.fn.sbname = function(options) {
 			}
 		});
 	}
-	//Went wrong with the selection. Do nothing and pass the collection on for further chainability.
+	// Went wrong with the selection. Do nothing and pass the collection on for further chainability.
 	return $(this);
 };
 
@@ -274,13 +267,13 @@ $.sbname = {
 		var instance;
 
 		var createInstance = function() {
-			//This will be the key for the 'database' (json string) stored in localStorage
+			// This will be the key for the 'database' (json string) stored in localStorage
 			var _name = "sbnameDB";
 
-			//This is the current version of the 'database' scheme
+			// This is the current version of the 'database' scheme
 			var _version = '0.1';
 
-			//This array will contain all names
+			// This array will contain all names
 			var _names = [];
 
 
@@ -507,6 +500,24 @@ $.fn.sbname.defaults = {
 };
 
 //Helper Funcs
+
+/**
+ * Helper function to find a holder object based on the 
+ * domOption (options.dom).
+ */
+function findHolder($element, domOption) {
+	// If a jQuery object was passed in domOptions, use it.
+	if (domOption instanceof $) {
+		return domOption;
+	}
+	// If a string was passed in domOptions, try to find it 
+	// inside of $element.
+	if (typeof domOption === 'string' && domOption) {
+		return $element.find(domOption);
+	}
+	// Default to $element.
+	return $element;
+}
 
 /**
  * Filter out irrelevant stuff (everything but digits)
