@@ -276,14 +276,16 @@ $.sbname = {
 			// This array will contain all names
 			var _names = [];
 
-
+			/**
+			 * Check if browser supports local storage.
+			 */
 			var hasSupport = function() {
 				return 'localStorage' in window && window['localStorage'] !== null;
 			};
 
 			/**
-			* Persists the current state of the database to local storage.
-			*/
+			 * Persists the current state of the database to local storage.
+			 */
 			var persist = function() {
 				localStorage[_name] = JSON.stringify({
 					"version": _version,
@@ -291,6 +293,9 @@ $.sbname = {
 				});
 			};
 
+			/**
+			 * Get index of article from names collection.
+			 */
 			var getIndexOfArticle = function(articleNumber) {
 				if (_names.length > 0) {
 					for (var i = _names.length - 1; i >= 0; i--) {
@@ -302,6 +307,9 @@ $.sbname = {
 				return false;
 			}
 
+			/**
+			 * Get name by article number from names collection.
+			 */
 			var get = function(articleNumber) {
 				var i = getIndexOfArticle(articleNumber);
 				if (i !== false) {
@@ -310,6 +318,9 @@ $.sbname = {
 				return false;
 			};
 
+			/**
+			 * Set name for article number.
+			 */
 			var set = function(articleNumber, name, nameExtended) {
 				var i = getIndexOfArticle(articleNumber),
 						data = {
@@ -325,6 +336,9 @@ $.sbname = {
 				}
 			};
 
+			/**
+			 * Remove name by article number.
+			 */
 			var remove = function(articleNumber) {
 				var i = getIndexOfArticle(articleNumber);
 				if (i !== false) {
@@ -334,8 +348,6 @@ $.sbname = {
 				// Not found in array
 				return false;
 			};
-
-
 
 			// No reason to do anything at all if there isn't any support for
 			// local storage.
