@@ -89,9 +89,14 @@
  *
  */
 $.fn.sbname = function(options) {
-	// Check if a parameter for direction has ben passed and overwrite defaults with user inputs.
-	var options = (typeof options !== 'undefined') ? $.extend({}, $.fn.sbname.defaults, options) : $.extend({}, $.fn.sbname.defaults),
-			db = false;
+	var db = false;
+
+	// Merge defaults with options passed in parameter.
+	if (typeof options !== 'undefined') {
+		options = $.extend({}, $.fn.sbname.defaults, options);
+	} else {
+		options = $.extend({}, $.fn.sbname.defaults);
+	}
 
 	// Make sure the used collection is a jQuery collection.
 	if (this instanceof jQuery) {
@@ -432,26 +437,26 @@ $.fn.sbname.defaults = {
 	/**
 	 * Standard animate callback. Fades out, changes text and fades in again.
 	 */
-	animate: function(animOut, animIn, nameHolder, name) {
+	animate: function(animOut, animIn, $nameHolder, name) {
 		// Complete callback run when out animation has finished.
 		var outComplete = function() {
 			//Should we set the product name on the value attribute or in the innerhtml?
-			var holderType = (/^(?:area|input)$/i.test(nameHolder[0].tagName)) ? 'value' : 'html';
-			if (holderType == 'value') {
-				nameHolder.val(name);
+			var holderType = $nameHolder.prop('tagName');
+			if (holderType === 'INPUT' || holderType === 'TEXTAREA') {
+				$nameHolder.val(name);
 			} else {
-				nameHolder.html(name);
+				$nameHolder.html(name);
 			}
 			// Animate in again
-			nameHolder.animate(animIn.properties, animIn.options);
+			$nameHolder.animate(animIn.properties, animIn.options);
 		};
 		// Merge in current opacity state of nameHolder
 		// so we know what to animate back to.
-		animIn.properties = $.extend({'opacity': nameHolder.css('opacity')}, animIn.properties);
+		animIn.properties = $.extend({'opacity': $nameHolder.css('opacity')}, animIn.properties);
 		// Use our own complete callback above.
 		animOut.options.complete = outComplete;
 		// Animate out
-		nameHolder.animate(animOut.properties, animOut.options);
+		$nameHolder.animate(animOut.properties, animOut.options);
 	},
 
 	/**
